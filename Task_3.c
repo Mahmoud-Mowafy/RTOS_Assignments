@@ -95,10 +95,26 @@ uint8_t 	button2FallingEdge  			 = pdFALSE;
 uint8_t 	lastButton1State    			 = pdFALSE;
 uint8_t 	lastButton2State    			 = pdFALSE;
 
+const signed char   RisingDetectionString[] 	 = "Rising Edge\n";
+const signed char   FallingDetectionString[] 	 = "Falling Edge\n";
+const signed char   UARTPrintString[] 				 = "Hello UART\n";
 
+const signed char   BUTTON_1_ID[] 	   = "BUTTON_1------->";
+const signed char   BUTTON_2_ID[] 	   = "BUTTON_2------->";
+const signed char   PRINT_TASK_ID[] 	 = "UART String---->";
+
+//Creates a handler by which the queue can be referenced.
 QueueHandle_t xQueue1;
 
-SemaphoreHandle_t mutex;
+#define UART_loc_string1Length			30
+struct AMessage
+{
+//    signed char ucMessageID;
+	  const signed char *ucID;
+    const signed char *ucData;
+};
+
+
 
 
 
@@ -117,91 +133,82 @@ static void prvSetupHardware( void );
 /*  Task to be created */
 void Button1_Detect_Task(void * pvParameters)
 {
-
+	struct AMessage* pxPinterToButton1Message;
+	pxPinterToButton1Message->ucID = BUTTON_1_ID;
  for(;;)
 	{
 		 uint8_t buttonState = GPIO_read(PORT_0, PIN0);
- //Here starts the code for detecting an edge
-	if ( buttonState != lastButton1State ) 
-		{
-		/* Create the semaphore to guard a shared resource.  As we are using
-    the semaphore for mutual exclusion we create a mutex semaphore
-    rather than a binary semaphore. */
-			if( xSemaphoreTake( mutex, ( TickType_t ) 0 ) == pdTRUE )
+	//Here starts the code for detecting an edge
+		if ( buttonState != lastButton1State ) 
 			{
-				  if (buttonState == PIN_IS_LOW) 
-					 {
-						button1RisingEdge = PIN_IS_LOW;
-					 }
-				  else 
-					 {
-						button1RisingEdge = PIN_IS_HIGH;
-					 }
-				 
-					 lastButton1State = buttonState; 
-				   edge1ChangeFlag = pdTRUE	;
-					 //xSemaphoreGive( mutex );
-					}
-					else
-					{
-						//edgeDetectionFlag = pdFALSE;
-					}		
+				if (buttonState == PIN_IS_LOW) 
+				{
+					pxPinterToButton1Message->ucData = FallingDetectionString;
+				}
+				else 
+				{
+					pxPinterToButton1Message->ucData = RisingDetectionString;
+				}
+				
+				lastButton1State = buttonState;
+			 /* Send the address of xMessage to the queue created to hold 10    pointers. */
+			 xQueueSend( /* The handle of the queue. */
+									 xQueue1,
+									 /* The address of the variable that holds the address of xMessage.
+									 sizeof( &xMessage ) bytes are copied from here into the queue. As the
+									 variable holds the address of xMessage it is the address of xMessage
+									 that is copied into the queue. */
+									 ( void * ) &pxPinterToButton1Message,
+									 ( TickType_t ) 0 );				
 			}
-		  else
-		  {
-				  edge1ChangeFlag = pdFALSE;
-		  }				
+		else
+			{
+				//edgeDetectionFlag = pdFALSE;
+			}	
 		/*Provide 50 tick delay to give the cpu access*/
-		vTaskDelay(50);	
-	}		
+		vTaskDelay(50);			
+	 }		
 	vTaskDelete(Button1_Detect_Task_Handler);
 }
 
 /*  Task to be created */
 void Button2_Detect_Task(void * pvParameters)
 {
-	for(;;)
+	struct AMessage* pxPinterToButton2Message;
+	pxPinterToButton2Message->ucID = BUTTON_2_ID;
+ for(;;)
 	{
- BaseType_t xQueueSend(
-                            xQueue1,
-                            const void * pvItemToQueue,
-                            TickType_t xTicksToWait
-                         );
-	/*Task code goes here*/
- uint8_t buttonState = GPIO_read(PORT_0, PIN1);
- //Here starts the code for detecting an edge
- 	if ( buttonState != lastButton2State ) 
-		{
-		/* Create the semaphore to guard a shared resource.  As we are using
-    the semaphore for mutual exclusion we create a mutex semaphore
-    rather than a binary semaphore. */
-			if( xSemaphoreTake( mutex, ( TickType_t ) 0 ) == pdTRUE )
+		 uint8_t buttonState = GPIO_read(PORT_0, PIN1);
+	//Here starts the code for detecting an edge
+		if ( buttonState != lastButton1State ) 
 			{
-				  if (buttonState == PIN_IS_LOW) 
-					 {
-						button2RisingEdge = PIN_IS_LOW;
-					 }
-				  else 
-					 {
-						button2RisingEdge = PIN_IS_HIGH;
-					 }
-				 
-					 lastButton2State = buttonState; 
-				   edge2ChangeFlag = pdTRUE	;
-					 //xSemaphoreGive( mutex );
-					}
-					else
-					{
-						//edgeDetectionFlag = pdFALSE;
-					}		
+				if (buttonState == PIN_IS_LOW) 
+				{
+					pxPinterToButton2Message->ucData = FallingDetectionString;
+				}
+				else 
+				{
+					pxPinterToButton2Message->ucData = RisingDetectionString;
+				}
+				lastButton1State = buttonState; 
+			 /* Send the address of xMessage to the queue created to hold 10    pointers. */
+			 xQueueSend( /* The handle of the queue. */
+									 xQueue1,
+									 /* The address of the variable that holds the address of xMessage.
+									 sizeof( &xMessage ) bytes are copied from here into the queue. As the
+									 variable holds the address of xMessage it is the address of xMessage
+									 that is copied into the queue. */
+									 ( void * ) &pxPinterToButton2Message,
+									 ( TickType_t ) 0 );
 			}
-		  else
-		  {
-				  edge2ChangeFlag = pdFALSE;
-		  }				
+		else
+			{
+				//edgeDetectionFlag = pdFALSE;
+			}	
 		/*Provide 50 tick delay to give the cpu access*/
-		vTaskDelay(50);	
-	}	
+			
+		vTaskDelay(50);			
+	 }		
 	vTaskDelete(Button2_Detect_Task_Handler);
 }
 
@@ -209,46 +216,24 @@ void Button2_Detect_Task(void * pvParameters)
 /*  Task to be created */
 void UARTPrint_Task(void * pvParameters)
 {
-	 /* The semaphore was created successfully and
-       can be used. */
-	uint8_t UART_loc_writtingLoopCounter = pdFALSE;
-	uint32_t UART_loc_heavyLoadCounter   = pdFALSE;
-	const char str[] = "Task 1 got access\n";
-	uint8_t UART_loc_stringLength = strlen(str);
-	for(;;)
+	struct AMessage* pxPointerToPrintMessage;
+	pxPointerToPrintMessage->ucID = PRINT_TASK_ID;
+ for(;;)
 	{
-		UART_loc_writtingLoopCounter = pdFALSE;
-		UART_loc_heavyLoadCounter    = pdFALSE;
-		 /* See if we can obtain the semaphore.  If the semaphore is not
-				available wait 10 ticks to see if it becomes free. */
-		if( xSemaphoreTake( mutex, ( TickType_t ) 30 ) == pdTRUE )
-			{
-				/* We were able to obtain the semaphore and can now access the
-				shared resource. */	
-				while( UART_loc_writtingLoopCounter < 10 )
-				{
-					//printing the string
-					(void)vSerialPutString(str, UART_loc_stringLength);
-					//(void)xSerialPutChar('B');
+		 pxPointerToPrintMessage->ucData = UARTPrintString;
 
-					 UART_loc_writtingLoopCounter++;	
-				}
-					for(UART_loc_heavyLoadCounter = pdFALSE ; UART_loc_heavyLoadCounter < 5000; UART_loc_heavyLoadCounter++)
-					{
-						//Empty loop, To simulate heavy load
-					}				
-					/* We have finished accessing the shared resource.  Release the
-						semaphore. */
-				xSemaphoreGive( mutex );
-			}
-			else
-			{
-					/* We could not obtain the semaphore and can therefore not access
-					the shared resource safely. */
-			}
-	/*Provide 100 tick delay to give the cpu access*/
-	vTaskDelay(100);			
-	}
+			 /* Send the address of xMessage to the queue created to hold 10    pointers. */
+		 xQueueSend( /* The handle of the queue. */
+								 xQueue1,
+								 /* The address of the variable that holds the address of xMessage.
+								 sizeof( &xMessage ) bytes are copied from here into the queue. As the
+								 variable holds the address of xMessage it is the address of xMessage
+								 that is copied into the queue. */
+								 ( void * ) &pxPointerToPrintMessage,
+								 ( TickType_t ) 0 );
+		/*Provide 100 tick delay to give the cpu access*/		
+		vTaskDelay(100);			
+	 }		
 	 vTaskDelete(UARTPrint_Task_Handler);
 }
 
@@ -256,68 +241,31 @@ void UARTPrint_Task(void * pvParameters)
 /*  Task to be created */
 void UARTConsumer_Task(void * pvParameters)
 {
-	 /* The semaphore was created successfully and
-       can be used. */
-	xQueue1 = xQueueCreate( 10, sizeof( unsigned long ) );
-	const char str1[] = "Detect Rising Edge\n";
-	const char str2[] = "Detect Falling Edge\n";
-	uint8_t UART_loc_string1Length = strlen(str1);
-	uint8_t UART_loc_string2Length = strlen(str2);
+
+
+	
+	struct AMessage *pxRxedPointer;
 	for(;;)
 	{			
-		 /* See if we can obtain the semaphore.  If the semaphore is not
-				available wait 0 ticks to see if it becomes free. */
-  if(pdTRUE == edge1ChangeFlag)  
-	{
-		if( xSemaphoreTake( mutex, ( TickType_t ) 0 ) == pdTRUE )
+			
+		if( xQueue1 != NULL )
 			{
-				/* We were able to obtain the semaphore and can now access the
-				shared resource. */	
-						if( PIN_IS_HIGH == button1RisingEdge )  
-						{
-							(void)vSerialPutString(str1, UART_loc_string1Length);			
-						}
-						else
-						{
-							(void)vSerialPutString(str2, UART_loc_string2Length);	
-						}
-					/* We have finished accessing the shared resource.  Release the
-						semaphore. */
-						edge1ChangeFlag = pdFALSE;
-				xSemaphoreGive( mutex );
+						/* Queue was created and must be used. */
+				/* Receive a message from the created queue to hold pointers.  Block for 10
+				ticks if a message is not immediately available.  The value is read into a
+				pointer variable, and as the value received is the address of the xMessage
+				variable, after this call pxRxedPointer will point to xMessage. */
+				if( xQueueReceive( xQueue1,
+													&( pxRxedPointer ),
+													( TickType_t ) 10 ) == pdPASS )
+				{
+					/* xRxedStructure now contains a copy of xMessage. */
+					while( ( vSerialPutString(pxRxedPointer->ucID, UART_loc_string1Length) )   == pdFALSE   );
+					while( ( vSerialPutString(pxRxedPointer->ucData, UART_loc_string1Length) ) == pdFALSE   );
+				}					
+				
 			}
-			else
-			{
-					/* We could not obtain the semaphore and can therefore not access
-					the shared resource safely. */
-			}
-	}
-	
-	else if(pdTRUE == edge2ChangeFlag)
-	{
-		if( xSemaphoreTake( mutex, ( TickType_t ) 0 ) == pdTRUE )
-			{
-				/* We were able to obtain the semaphore and can now access the
-				shared resource. */	
-						if( PIN_IS_HIGH == button2RisingEdge)
-						{
-							(void)vSerialPutString(str1, UART_loc_string1Length);			
-						}
-						else
-						{
-							(void)vSerialPutString(str2, UART_loc_string2Length);	
-						}
-					/* We have finished accessing the shared resource.  Release the
-						semaphore. */
-						edge2ChangeFlag = pdFALSE;
-				xSemaphoreGive( mutex );
-			}
-			else
-			{
-					/* We could not obtain the semaphore and can therefore not access
-					the shared resource safely. */
-			}
-	}
+
 	/*Provide 50 tick delay to give the cpu access*/
 	vTaskDelay(50);			
 	}
@@ -335,10 +283,9 @@ int main( void )
 	/* Setup the hardware for use with the Keil demo board. */
 	prvSetupHardware();
 	//xSerialPortInitMinimal(ser19200 );
-	 mutex = xSemaphoreCreateMutex();
+	/* Create a queue capable of containing 10 unsigned long values. */
+	xQueue1 = xQueueCreate( 10, sizeof( struct AMessage * ) );
 
-	if(mutex != NULL)
-	{
 				/* Create Tasks here */
 			
 			xTaskCreate( 
@@ -382,7 +329,6 @@ int main( void )
 			to supervisor mode prior to main being called.  If you are not using one of
 			these demo application projects then ensure Supervisor mode is used here. */
 			vTaskStartScheduler();
-	}
 	/* Should never reach here!  If you do then there was not enough heap
 	available for the idle task to be created. */
 	for( ;; );
