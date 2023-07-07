@@ -95,31 +95,34 @@ uint8_t 	button2FallingEdge  			 = pdFALSE;
 uint8_t 	lastButton1State    			 = pdFALSE;
 uint8_t 	lastButton2State    			 = pdFALSE;
 
-const signed char   RisingDetectionString[] 	 = "Rising Edge\n";
-const signed char   FallingDetectionString[] 	 = "Falling Edge\n";
-const signed char   UARTPrintString[] 				 = "Hello UART\n";
+const signed char   Rising1DetectionString[] 	 = "Risg\n";
+const signed char   Falling1DetectionString[]  = "Falg\n";
 
-const signed char   BUTTON_1_ID[] 	   = "BUTTON_1------->";
-const signed char   BUTTON_2_ID[] 	   = "BUTTON_2------->";
-const signed char   PRINT_TASK_ID[] 	 = "UART String---->";
+const signed char   Rising2DetectionString[] 	 = "Risg\n";
+const signed char   Falling2DetectionString[] = "Falg\n";
+
+const signed char   UARTPrintString[] 				 = "uart\n";
+
+const signed char   BUTTON_1_ris_st[] 	   = "BUT1---->risig\n";
+const signed char   BUTTON_2_ris_st[] 	   = "BUT2---->risig\n";
+const signed char   BUTTON_1_fal_st[] 	   = "BUT1---->fallg\n";
+const signed char   BUTTON_2_fal_st[] 	   = "BUT2---->fallg\n";
+
+const signed char   PRINT_TASK_ID_st[] 	   = "UART---->hello\n";
 
 //Creates a handler by which the queue can be referenced.
 QueueHandle_t xQueue1;
 
-#define UART_loc_string1Length			30
+#define   BUTTON_1_ID 	   '1'
+#define   BUTTON_2_ID 	   '2'
+#define   PRINT_TASK_ID	   '3'
+#define UART_loc_string1Length			15
 struct AMessage
 {
-//    signed char ucMessageID;
-	  const signed char *ucID;
+ //   signed char ucMessageID;
+//	  const signed char *ucID;
     const signed char *ucData;
-};
-
-
-
-
-
-
-
+}xMessage;
 
 /*
  * Configure the processor for use with the Keil demo board.  This is very
@@ -133,8 +136,9 @@ static void prvSetupHardware( void );
 /*  Task to be created */
 void Button1_Detect_Task(void * pvParameters)
 {
-	struct AMessage* pxPinterToButton1Message;
-	pxPinterToButton1Message->ucID = BUTTON_1_ID;
+	struct AMessage pxPinterToButton1Message;
+//	pxPinterToButton1Message.ucID = BUTTON_1_ID_st;
+//	pxPinterToButton1Message.ucMessageID = BUTTON_1_ID;
  for(;;)
 	{
 		 uint8_t buttonState = GPIO_read(PORT_0, PIN0);
@@ -143,28 +147,30 @@ void Button1_Detect_Task(void * pvParameters)
 			{
 				if (buttonState == PIN_IS_LOW) 
 				{
-					pxPinterToButton1Message->ucData = FallingDetectionString;
+					pxPinterToButton1Message.ucData = BUTTON_1_fal_st;
 				}
 				else 
 				{
-					pxPinterToButton1Message->ucData = RisingDetectionString;
+					pxPinterToButton1Message.ucData = BUTTON_1_ris_st;
 				}
 				
-				lastButton1State = buttonState;
-			 /* Send the address of xMessage to the queue created to hold 10    pointers. */
+				lastButton1State = buttonState;	
+			  /* Send the entire structure to the queue created to hold 10 structures. */
 			 xQueueSend( /* The handle of the queue. */
 									 xQueue1,
-									 /* The address of the variable that holds the address of xMessage.
-									 sizeof( &xMessage ) bytes are copied from here into the queue. As the
-									 variable holds the address of xMessage it is the address of xMessage
-									 that is copied into the queue. */
+               /* The address of the xMessage variable.  sizeof( struct AMessage )
+               bytes are copied from here into the queue. */
 									 ( void * ) &pxPinterToButton1Message,
+								/* Block time of 0 says don't block if the queue is already full.
+               Check the value returned by xQueueSend() to know if the message
+               was sent to the queue successfully. */
 									 ( TickType_t ) 0 );				
 			}
 		else
 			{
 				//edgeDetectionFlag = pdFALSE;
 			}	
+	
 		/*Provide 50 tick delay to give the cpu access*/
 		vTaskDelay(50);			
 	 }		
@@ -174,37 +180,40 @@ void Button1_Detect_Task(void * pvParameters)
 /*  Task to be created */
 void Button2_Detect_Task(void * pvParameters)
 {
-	struct AMessage* pxPinterToButton2Message;
-	pxPinterToButton2Message->ucID = BUTTON_2_ID;
+	struct AMessage pxPinterToButton2Message;
+//	pxPinterToButton2Message.ucID = BUTTON_2_ID_st;
+//	pxPinterToButton2Message.ucMessageID = BUTTON_2_ID;
  for(;;)
 	{
 		 uint8_t buttonState = GPIO_read(PORT_0, PIN1);
 	//Here starts the code for detecting an edge
-		if ( buttonState != lastButton1State ) 
+		if ( buttonState != lastButton2State ) 
 			{
 				if (buttonState == PIN_IS_LOW) 
 				{
-					pxPinterToButton2Message->ucData = FallingDetectionString;
+					pxPinterToButton2Message.ucData = BUTTON_2_fal_st;
 				}
 				else 
 				{
-					pxPinterToButton2Message->ucData = RisingDetectionString;
+					pxPinterToButton2Message.ucData = BUTTON_2_ris_st;
 				}
-				lastButton1State = buttonState; 
-			 /* Send the address of xMessage to the queue created to hold 10    pointers. */
+				lastButton2State = buttonState; 
+			 /* Send the entire structure to the queue created to hold 10 structures. */
 			 xQueueSend( /* The handle of the queue. */
 									 xQueue1,
-									 /* The address of the variable that holds the address of xMessage.
-									 sizeof( &xMessage ) bytes are copied from here into the queue. As the
-									 variable holds the address of xMessage it is the address of xMessage
-									 that is copied into the queue. */
+               /* The address of the xMessage variable.  sizeof( struct AMessage )
+               bytes are copied from here into the queue. */
 									 ( void * ) &pxPinterToButton2Message,
+								 /* Block time of 0 says don't block if the queue is already full.
+               Check the value returned by xQueueSend() to know if the message
+               was sent to the queue successfully. */
 									 ( TickType_t ) 0 );
 			}
 		else
 			{
 				//edgeDetectionFlag = pdFALSE;
 			}	
+
 		/*Provide 50 tick delay to give the cpu access*/
 			
 		vTaskDelay(50);			
@@ -216,21 +225,24 @@ void Button2_Detect_Task(void * pvParameters)
 /*  Task to be created */
 void UARTPrint_Task(void * pvParameters)
 {
-	struct AMessage* pxPointerToPrintMessage;
-	pxPointerToPrintMessage->ucID = PRINT_TASK_ID;
+	struct AMessage pxPointerToPrintMessage;
+//	pxPointerToPrintMessage.ucID = PRINT_TASK_ID_st;
+//	pxPointerToPrintMessage.ucMessageID = PRINT_TASK_ID;
  for(;;)
 	{
-		 pxPointerToPrintMessage->ucData = UARTPrintString;
+		 pxPointerToPrintMessage.ucData = PRINT_TASK_ID_st;
 
 			 /* Send the address of xMessage to the queue created to hold 10    pointers. */
-		 xQueueSend( /* The handle of the queue. */
-								 xQueue1,
-								 /* The address of the variable that holds the address of xMessage.
-								 sizeof( &xMessage ) bytes are copied from here into the queue. As the
-								 variable holds the address of xMessage it is the address of xMessage
-								 that is copied into the queue. */
-								 ( void * ) &pxPointerToPrintMessage,
-								 ( TickType_t ) 0 );
+			 /* Send the entire structure to the queue created to hold 10 structures. */
+			 xQueueSend( /* The handle of the queue. */
+									 xQueue1,
+               /* The address of the xMessage variable.  sizeof( struct AMessage )
+               bytes are copied from here into the queue. */
+									 ( void * ) &pxPointerToPrintMessage,
+								 /* Block time of 0 says don't block if the queue is already full.
+               Check the value returned by xQueueSend() to know if the message
+               was sent to the queue successfully. */
+									 ( TickType_t ) 0 );
 		/*Provide 100 tick delay to give the cpu access*/		
 		vTaskDelay(100);			
 	 }		
@@ -244,24 +256,28 @@ void UARTConsumer_Task(void * pvParameters)
 
 
 	
-	struct AMessage *pxRxedPointer;
+	struct AMessage pxRxedPointer;
 	for(;;)
 	{			
 			
 		if( xQueue1 != NULL )
 			{
-						/* Queue was created and must be used. */
-				/* Receive a message from the created queue to hold pointers.  Block for 10
-				ticks if a message is not immediately available.  The value is read into a
-				pointer variable, and as the value received is the address of the xMessage
-				variable, after this call pxRxedPointer will point to xMessage. */
-				if( xQueueReceive( xQueue1,
-													&( pxRxedPointer ),
-													( TickType_t ) 10 ) == pdPASS )
+      /* Receive a message from the created queue to hold complex struct AMessage
+      structure.  Block for 10 ticks if a message is not immediately available.
+      The value is read into a struct AMessage variable, so after calling
+      xQueueReceive() xRxedStructure will hold a copy of xMessage. */
+      if( xQueueReceive( xQueue1,
+                         &( pxRxedPointer ),
+                         ( TickType_t ) 10 ) == pdPASS )
 				{
 					/* xRxedStructure now contains a copy of xMessage. */
-					while( ( vSerialPutString(pxRxedPointer->ucID, UART_loc_string1Length) )   == pdFALSE   );
-					while( ( vSerialPutString(pxRxedPointer->ucData, UART_loc_string1Length) ) == pdFALSE   );
+					//GPIO_toggle(PORT_0,PIN13);
+				while( ( vSerialPutString(pxRxedPointer.ucData, UART_loc_string1Length) )   == pdFALSE   );
+
+//					while( ( vSerialPutString(pxRxedPointer.ucData, UART_loc_string1Length) ) == pdFALSE   );
+					
+//					xSerialPutChar(pxRxedPointer.ucMessageID);
+//					while( ( vSerialPutString("hello\n", UART_loc_string1Length) ) == pdFALSE   );
 				}					
 				
 			}
@@ -284,7 +300,7 @@ int main( void )
 	prvSetupHardware();
 	//xSerialPortInitMinimal(ser19200 );
 	/* Create a queue capable of containing 10 unsigned long values. */
-	xQueue1 = xQueueCreate( 10, sizeof( struct AMessage * ) );
+	xQueue1 = xQueueCreate( 100, sizeof( struct AMessage * ) );
 
 				/* Create Tasks here */
 			
@@ -314,13 +330,13 @@ int main( void )
 									&UARTConsumer_Task_Handler );
 									
 											/* Create Tasks here */
-//			xTaskCreate( 
-//									UARTPrint_Task,
-//									"UARTPrint_Task",
-//									configMINIMAL_STACK_SIZE,
-//									(void *) 1,
-//									1,												/*tskIDLE_PRIORITY*/
-//									&UARTPrint_Task_Handler );
+			xTaskCreate( 
+									UARTPrint_Task,
+									"UARTPrint_Task",
+									configMINIMAL_STACK_SIZE,
+									(void *) 1,
+									1,												/*tskIDLE_PRIORITY*/
+									&UARTPrint_Task_Handler );
 			/* Now all the tasks have been started - start the scheduler.
 
 			NOTE : Tasks run in system mode and the scheduler runs in Supervisor mode.
