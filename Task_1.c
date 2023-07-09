@@ -68,7 +68,8 @@
 
 
 /*-----------------------------------------------------------*/
-
+#define BUTTON_TASK_PERIODICITY				50
+#define LED_TASK_PERIODICITY				50
 /* Constants to setup I/O and processor. */
 #define mainBUS_CLK_FULL	( ( unsigned char ) 0x01 )
 
@@ -125,7 +126,7 @@ void LedToggle_Task(void * pvParameters)
 	  			//Do Nothing
 	  }
 	/*Provide 50 tick delay to give the cpu access*/
-	vTaskDelay(50);			
+	vTaskDelay(LED_TASK_PERIODICITY);			
 	}
 	 vTaskDelete(LedToggle_Task_Handler);
 }
@@ -168,7 +169,7 @@ void Button_Task(void * pvParameters)
 			}		
 		}
 		/*Provide 50 tick delay to give the cpu access*/
-		vTaskDelay(50);	
+		vTaskDelay(BUTTON_TASK_PERIODICITY);	
 	}		
 	vTaskDelete(Button_Task_Handler);
 }

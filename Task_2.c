@@ -69,6 +69,8 @@
 
 
 /*-----------------------------------------------------------*/
+#define UART_TASK_1_PERIODICITY				500
+#define UART_TASK_2_PERIODICITY				100
 
 /* Constants to setup I/O and processor. */
 #define mainBUS_CLK_FULL	( ( unsigned char ) 0x01 )
@@ -129,7 +131,7 @@ void UART_Task1(void * pvParameters)
 					the shared resource safely. */
 			}
 	/*Provide 100 tick delay to give the cpu access*/
-	vTaskDelay(100);			
+	vTaskDelay(UART_TASK_2_PERIODICITY);			
 	}
 	 vTaskDelete(UART_Task1_Handler);
 }
@@ -176,8 +178,8 @@ void UART_Task2(void * pvParameters)
 					/* We could not obtain the semaphore and can therefore not access
 					the shared resource safely. */
 			}
-	/*Provide 50 tick delay to give the cpu access*/
-	vTaskDelay(500);			
+	/*Provide 500 tick delay to give the cpu access*/
+	vTaskDelay(UART_TASK_1_PERIODICITY);			
 	}
 	 vTaskDelete(UART_Task2_Handler);
 }

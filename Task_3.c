@@ -69,7 +69,10 @@
 
 
 /*-----------------------------------------------------------*/
-
+#define UART_TASK_PERIODICITY				100
+#define BUTTON_TASK_PERIODICITY				50
+#define CONSUMER_TASK_PERIODICITY			50
+#define NUMBER_OF_ELEMENTS					100
 /* Constants to setup I/O and processor. */
 #define mainBUS_CLK_FULL	( ( unsigned char ) 0x01 )
 
@@ -172,7 +175,7 @@ void Button1_Detect_Task(void * pvParameters)
 			}	
 	
 		/*Provide 50 tick delay to give the cpu access*/
-		vTaskDelay(50);			
+		vTaskDelay(BUTTON_TASK_PERIODICITY);			
 	 }		
 	vTaskDelete(Button1_Detect_Task_Handler);
 }
@@ -216,7 +219,7 @@ void Button2_Detect_Task(void * pvParameters)
 
 		/*Provide 50 tick delay to give the cpu access*/
 			
-		vTaskDelay(50);			
+		vTaskDelay(BUTTON_TASK_PERIODICITY);			
 	 }		
 	vTaskDelete(Button2_Detect_Task_Handler);
 }
@@ -244,7 +247,7 @@ void UARTPrint_Task(void * pvParameters)
                was sent to the queue successfully. */
 									 ( TickType_t ) 0 );
 		/*Provide 100 tick delay to give the cpu access*/		
-		vTaskDelay(100);			
+		vTaskDelay(UART_TASK_PERIODICITY);			
 	 }		
 	 vTaskDelete(UARTPrint_Task_Handler);
 }
@@ -283,7 +286,7 @@ void UARTConsumer_Task(void * pvParameters)
 			}
 
 	/*Provide 50 tick delay to give the cpu access*/
-	vTaskDelay(50);			
+	vTaskDelay(CONSUMER_TASK_PERIODICITY);			
 	}
 	 vTaskDelete(UARTConsumer_Task_Handler);
 }
@@ -300,7 +303,7 @@ int main( void )
 	prvSetupHardware();
 	//xSerialPortInitMinimal(ser19200 );
 	/* Create a queue capable of containing 10 unsigned long values. */
-	xQueue1 = xQueueCreate( 100, sizeof( struct AMessage * ) );
+	xQueue1 = xQueueCreate( NUMBER_OF_ELEMENTS, sizeof( struct AMessage * ) );
 
 				/* Create Tasks here */
 			
