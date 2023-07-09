@@ -69,6 +69,11 @@
 
 
 /*-----------------------------------------------------------*/
+#define BUTTON_TASK_PERIODICITY				50
+#define LED_TASK_500m_DELAY					500
+#define LED_TASK_100m_DELAY					100
+#define LED_TASK_1s_DELAY					1000
+#define LED_TASK_400m_DELAY					400
 
 /* Constants to setup I/O and processor. */
 #define mainBUS_CLK_FULL	( ( unsigned char ) 0x01 )
@@ -105,9 +110,9 @@ void Led1_Task(void * pvParameters)
 	{
 		/*Task code goes here*/
 		GPIO_write(PORT_0, PIN0, PIN_IS_HIGH);
-		vTaskDelay(100);
+		vTaskDelay(LED_TASK_100m_DELAY);
 		GPIO_write(PORT_0, PIN0, PIN_IS_LOW);
-		vTaskDelay(100);
+		vTaskDelay(LED_TASK_100m_DELAY);
 	}
 	vTaskDelete(Led1Task_Handler);
 }
@@ -118,9 +123,9 @@ void Led2_Task(void * pvParameters)
 	{
 		/*Task code goes here*/
 		GPIO_write(PORT_0, PIN1, PIN_IS_HIGH);
-		vTaskDelay(500);
+		vTaskDelay(LED_TASK_500m_DELAY);
 		GPIO_write(PORT_0, PIN1, PIN_IS_LOW);
-		vTaskDelay(500);
+		vTaskDelay(LED_TASK_500m_DELAY);
 	}
 	vTaskDelete(Led2Task_Handler);
 }
@@ -131,9 +136,9 @@ void Led3_Task(void * pvParameters)
 	{
 		/*Task code goes here*/
 		GPIO_write(PORT_0, PIN2, PIN_IS_HIGH);
-		vTaskDelay(1000);
+		vTaskDelay(LED_TASK_1s_DELAY);
 		GPIO_write(PORT_0, PIN2, PIN_IS_LOW);
-		vTaskDelay(1000);
+		vTaskDelay(LED_TASK_1s_DELAY);
 	}
 	vTaskDelete(Led3Task_Handler);
 }
@@ -155,7 +160,7 @@ void Button_Task(void * pvParameters)
 				DelayCalculator = PIN_IS_LOW;
 				while( PIN_IS_HIGH == GPIO_read(PORT_0, PIN0) ) 
 					{
-						vTaskDelay(1000);
+						vTaskDelay(LED_TASK_1s_DELAY);
 						DelayCalculator++;
 					}		
 			}
@@ -173,17 +178,17 @@ void Button_Task(void * pvParameters)
 			{
 				//Change the LED_toggle periodicity to be after 400ms
 				GPIO_write(PORT_0, PIN1, PIN_IS_HIGH);
-				vTaskDelay(400);
+				vTaskDelay(LED_TASK_400m_DELAY);
 				GPIO_write(PORT_0, PIN1, PIN_IS_LOW);
-				vTaskDelay(400);			
+				vTaskDelay(LED_TASK_400m_DELAY);			
 			}
 			else
 			{	
 				//Change the LED_toggle periodicity to be after 100ms
 				GPIO_write(PORT_0, PIN1, PIN_IS_HIGH);
-				vTaskDelay(100);
+				vTaskDelay(LED_TASK_100m_DELAY);
 				GPIO_write(PORT_0, PIN1, PIN_IS_LOW);
-				vTaskDelay(100);	
+				vTaskDelay(LED_TASK_100m_DELAY);	
 			}		
 	}
 	vTaskDelete(Button_Task_Handler);
